@@ -1,3 +1,9 @@
+// Initialize and add the map
+let map;
+//Init Empty Address String
+const addedAddresses = [];
+const markers = [];
+
 ((g) => {
   var h,
     a,
@@ -34,9 +40,6 @@
     : (d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n)));
 })({ key: "AIzaSyC8XRybMxBBIJkkAeo0GmrGanz5_2hAQME", v: "weekly" });
 
-// Initialize and add the map
-let map;
-
 async function initMap() {
   // The location of Uluru
   const position = { lat: -25.344, lng: 131.031 };
@@ -51,19 +54,9 @@ async function initMap() {
     center: position,
     mapId: "DEMO_MAP_ID",
   });
-
-  // The marker, positioned at Uluru
-  const marker = new AdvancedMarkerElement({
-    map: map,
-    position: position,
-    title: "Uluru",
-  });
 }
 
 initMap();
-
-//Init Empty Address String
-const addedAddresses = [];
 
 function parseAddress() {
   const address = document.getElementById("inputBox").value;
@@ -88,6 +81,7 @@ function parseAddress() {
         position: location,
         title: address,
       });
+      markers.push(marker); //Saves individual marker to array Markers
 
       const infoWindow = new google.maps.InfoWindow({
         content: `<strong>${address}</strong>`,
@@ -104,4 +98,8 @@ function parseAddress() {
   });
 }
 
-function clearMarker() {}
+function clearMarkers() {
+  markers.forEach((marker) => marker.setMap(null));
+  markers.length = 0;
+  addedAddresses.length = 0;
+}
