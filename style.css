@@ -1,0 +1,30 @@
+#map {
+  height: 75%;
+  width: 100%;
+  border: 5px inset;
+}
+
+#container {
+  display: flex;
+}
+
+#inputBox {
+  margin-left: 20px;
+  margin-top: 10px;
+  width: 300px;
+  border: 5px inset;
+}
+
+button {
+  margin-left: 20px;
+  margin-top: 10px;
+  border: 5px inset;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #818aff;
+}

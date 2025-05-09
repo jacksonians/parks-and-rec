@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <title>LocFinder</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script src="script.js"></script>
+  </head>
+  <body>
+    <h2>Google Maps Location Finder</h2>
+    <!--Div for Map-->
+    <div id="map"></div>
+    <div id="container">
+      <h3>Location:</h3>
+      <input
+        type="text"
+        id="inputBox"
+        placeholder="Unit # Street, City, State, Zip"
+      />
+      <button onclick="parseAddress()">Add Marker</button>
+      <button onclick="clearMarker()">Clear Marker</button>
+    </div>
+  </body>
+</html>
