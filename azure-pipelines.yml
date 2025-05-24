@@ -1,0 +1,49 @@
+trigger:
+  - main  # or your deployment branch
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  IMAGE_NAME: locfinder
+  DOCKER_REGISTRY: jacksonians
+  AWS_EC2_HOST: ec2-user@18.217.208.186
+
+stages:
+- stage: Build
+  jobs:
+  - job: DockerBuild
+    steps:
+    - checkout: self
+
+    - script: |
+        echo "Building Docker image..."
+        docker build -t $(DOCKER_REGISTRY)/$(IMAGE_NAME):latest .
+
+        echo "Logging in to Docker Hub..."
+        echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
+
+        echo "Pushing image to Docker Hub..."
+        docker push $(DOCKER_REGISTRY)/$(IMAGE_NAME):latest
+      displayName: 'Build and Push Docker Image'
+
+- stage: Deploy
+  dependsOn: Build
+  jobs:
+  - job: SSHDeploy
+    steps:
+    - task: InstallSSHKey@0
+      inputs:
+        sshPublicKey: $(SSH_PUBLIC_KEY)
+        sshKeySecureFile: locfinder-key.pem
+        knownHostsEntry: $(AWS_EC2_HOST)
+
+    - script: |
+        echo "Connecting to EC2 and deploying..."
+        ssh -o StrictHostKeyChecking=no $(AWS_EC2_HOST) << 'EOF'
+          docker pull $(DOCKER_REGISTRY)/$(IMAGE_NAME):latest
+          docker stop $(IMAGE_NAME) || true
+          docker rm $(IMAGE_NAME) || true
+          docker run -d --name $(IMAGE_NAME) -p 80:80 $(DOCKER_REGISTRY)/$(IMAGE_NAME):latest
+        EOF
+      displayName: 'SSH and Deploy to EC2'
