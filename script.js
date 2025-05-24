@@ -1,106 +1,113 @@
-// Initialize and add the map
+// Initialize global variables
 let map;
-//Init Empty Address String
 const addedAddresses = [];
 const markers = [];
 
-((g) => {
-  var h,
-    a,
-    k,
-    p = "The Google Maps JavaScript API",
-    c = "google",
-    l = "importLibrary",
-    q = "__ib__",
-    m = document,
-    b = window;
-  b = b[c] || (b[c] = {});
-  var d = b.maps || (b.maps = {}),
-    r = new Set(),
-    e = new URLSearchParams(),
-    u = () =>
-      h ||
-      (h = new Promise(async (f, n) => {
-        await (a = m.createElement("script"));
-        e.set("libraries", [...r] + "");
-        for (k in g)
-          e.set(
-            k.replace(/[A-Z]/g, (t) => "_" + t[0].toLowerCase()),
-            g[k]
-          );
-        e.set("callback", c + ".maps." + q);
-        a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
-        d[q] = f;
-        a.onerror = () => (h = n(Error(p + " could not load.")));
-        a.nonce = m.querySelector("script[nonce]")?.nonce || "";
-        m.head.append(a);
-      }));
-  d[l]
-    ? console.warn(p + " only loads once. Ignoring:", g)
-    : (d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n)));
-})({ key: "AIzaSyC8XRybMxBBIJkkAeo0GmrGanz5_2hAQME", v: "weekly" });
-
-async function initMap() {
-  // The location of Uluru
+// Initialize the Google Map
+function initMap() {
   const position = { lat: 17.6078, lng: 8.0817 };
-  // Request needed libraries.
-  //@ts-ignore
-  const { Map } = await google.maps.importLibrary("maps");
-  const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-
-  // The map, centered at Uluru
-  map = new Map(document.getElementById("map"), {
+  map = new google.maps.Map(document.getElementById("map"), {
     zoom: 5,
     center: position,
-    mapId: "DEMO_MAP_ID",
   });
 }
 
-initMap();
+// Get address from input box
+function getAddressFromInput() {
+  return document.getElementById("inputBox").value;
+}
 
-function parseAddress() {
-  const address = document.getElementById("inputBox").value;
-  if (!address) {
-    return alert("Please enter an address");
-  }
-  console.log(address);
+// Handle geocoding result
+function handleGeocodeResult(results, address) {
+  const location = results[0].geometry.location;
+  const marker = createMarker(location, address);
+  markers.push(marker);
+  map.setCenter(location);
+  map.setZoom(15);
+  fetchPlacePhoto(location, address, marker);
+}
 
-  //Init Geocoder API
+// Perform geocoding
+function geocodeAddress(address) {
   const geocoder = new google.maps.Geocoder();
   geocoder.geocode({ address: address }, (results, status) => {
     if (status === "OK") {
-      const location = results[0].geometry.location;
-
-      addedAddresses.push({
-        address,
-        lat: location.lat(),
-        lng: location.lng(),
-      });
-      const marker = new google.maps.Marker({
-        map,
-        position: location,
-        title: address,
-      });
-      markers.push(marker); //Saves individual marker to array Markers
-
-      const infoWindow = new google.maps.InfoWindow({
-        content: `<strong>${address}</strong>`,
-      });
-
-      marker.addListener("click", () => {
-        infoWindow.open(map, marker);
-      });
-
-      map.setCenter(location);
-      map.setZoom(15);
+      handleGeocodeResult(results, address);
     } else {
       alert("Geocode was not successful: " + status);
     }
   });
 }
 
+// Create a marker on the map
+function createMarker(location, title) {
+  return new google.maps.Marker({
+    map,
+    position: location,
+    title,
+  });
+}
+
+// Create an InfoWindow for a marker
+function createInfoWindow(address, photoHTML) {
+  return new google.maps.InfoWindow({
+    content: `<strong>${address}</strong>${photoHTML}`,
+  });
+}
+
+// Fetch place photo using PlacesService
+function fetchPlacePhoto(location, address, marker) {
+  const placesService = new google.maps.places.PlacesService(map);
+
+  placesService.nearbySearch(
+    {
+      location: location,
+      radius: 75,
+    },
+    (places, status) => {
+      let photoHTML = "";
+
+      if (
+        status === google.maps.places.PlacesServiceStatus.OK &&
+        places.length > 0
+      ) {
+        const place = places[0];
+
+        if (place.photos && place.photos.length > 1) {
+          photoHTML =
+            '<div style="display: flex; gap: 5px; flex-wrap: wrap; max-width: 300px;">';
+          place.photos.slice(0, 3).forEach((photo) => {
+            const url = photo.getUrl({ maxWidth: 100, maxHeight: 100 });
+            photoHTML += `<img src="${url}" width="100" height="100" alt="Location photo" />`;
+          });
+          photoHTML += "</div>";
+        } else {
+          photoHTML = "<br><em>No images more than 1 available.</em>";
+        }
+      }
+
+      const infoWindow = createInfoWindow(address, photoHTML);
+      marker.addListener("click", () => {
+        infoWindow.open(map, marker);
+      });
+      infoWindow.open(map, marker);
+    }
+  );
+}
+
+// Clear all markers from the map
 function clearMarkers() {
   markers.forEach((marker) => marker.setMap(null));
   markers.length = 0;
   addedAddresses.length = 0;
+}
+
+// Main entry point for address submission
+function parseAddress() {
+  const address = getAddressFromInput();
+  if (!address) {
+    alert("Please enter an address");
+    return;
+  }
+  geocodeAddress(address);
 }

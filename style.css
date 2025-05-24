@@ -28,3 +28,21 @@ body {
   padding: 0;
   background-color: #818aff;
 }
+
+.carousel {
+  position: relative;
+  width: 200px;
+  height: 150px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.carousel-img {
+  display: none;
+  width: 100%;
+  height: auto;
+}
+
+.carousel-img.active {
+  display: block;
+}
