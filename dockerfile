@@ -14,4 +14,4 @@ RUN npm install -g http-server
 EXPOSE 8080
 
 # Step 6: defines the default command to run when server starts
-CMD ["http-server", "-p", "8080", "-a", "0.0.0.0"]
+CMD ["http-server", "-p", "80", "-a", "0.0.0.0"]
